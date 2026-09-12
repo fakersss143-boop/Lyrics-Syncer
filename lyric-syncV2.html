@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lyric Sync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#20242C;
+    --panel:#262B35;
+    --panel-alt:#2D333F;
+    --text:#EDEEF0;
+    --text-dim:#9AA1AC;
+    --amber:#E3A857;
+    --amber-dim:#4A3D28;
+    --teal:#5FA8A0;
+    --border:#383E4A;
+    --danger:#C9736A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh;
+  }
+  h1,h2,.label,button,.tab{
+    font-family:'Space Grotesk',system-ui,sans-serif;
+  }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+
+  .app{
+    max-width:1100px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  h1{
+    margin:0;
+    font-size:26px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+  }
+  h1 span{ color:var(--amber); }
+  .sub{
+    color:var(--text-dim);
+    font-size:14px;
+    margin-top:4px;
+  }
+
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:4px;
+  }
+  .tab{
+    border:none;
+    background:transparent;
+    color:var(--text-dim);
+    padding:8px 16px;
+    border-radius:7px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .tab.active{
+    background:var(--amber);
+    color:#20242C;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:20px;
+  }
+  @media (max-width:820px){
+    .grid{ grid-template-columns:1fr; }
+  }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px;
+  }
+  .panel + .panel{ margin-top:16px; }
+
+  .label{
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-dim);
+    display:block;
+    margin-bottom:6px;
+  }
+  .field{ margin-bottom:16px; }
+  .hint{
+    font-size:12px;
+    color:var(--text-dim);
+    margin-top:6px;
+    line-height:1.5;
+  }
+
+  input[type="file"], input[type="password"], textarea{
+    width:100%;
+    background:var(--panel-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:8px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:inherit;
+  }
+  textarea{
+    resize:vertical;
+    min-height:140px;
+    line-height:1.55;
+  }
+  input:focus, textarea:focus, button:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:1px;
+  }
+
+  button{
+    cursor:pointer;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel-alt);
+    color:var(--text);
+    padding:10px 14px;
+    font-size:14px;
+    font-weight:600;
+  }
+  button:hover{ border-color:var(--amber); }
+  button:disabled{ opacity:0.45; cursor:not-allowed; }
+  .btn-primary{
+    background:var(--amber);
+    color:#20242C;
+    border-color:var(--amber);
+    width:100%;
+  }
+  .btn-primary:hover{ filter:brightness(1.06); }
+  .btn-row{ display:flex; gap:8px; }
+  .btn-row button{ flex:1; }
+
+  .stage{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px;
+    margin-bottom:16px;
+  }
+  .now-line{
+    font-size:26px;
+    font-weight:600;
+    line-height:1.4;
+    min-height:74px;
+    display:flex;
+    align-items:center;
+    text-align:center;
+    justify-content:center;
+    padding:0 12px;
+  }
+  .now-line .prev, .now-line .next{ display:none; }
+  .placeholder{ color:var(--text-dim); font-weight:400; font-size:16px; }
+
+  audio{ width:100%; margin-top:14px; }
+
+  .tap-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin-top:16px;
+    flex-wrap:wrap;
+  }
+  .tap-btn{
+    flex:1;
+    min-width:160px;
+    background:var(--amber);
+    color:#20242C;
+    border:none;
+    border-radius:10px;
+    padding:16px;
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:0.02em;
+  }
+  .tap-btn:hover{ filter:brightness(1.06); }
+  .progress-note{
+    color:var(--text-dim);
+    font-size:13px;
+    white-space:nowrap;
+  }
+
+  .offset-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:12px;
+    font-size:13px;
+    color:var(--text-dim);
+  }
+  .offset-row input[type="range"]{ flex:1; accent-color:var(--amber); }
+  .offset-val{ width:56px; text-align:right; }
+
+  .lines{
+    max-height:420px;
+    overflow-y:auto;
+    border:1px solid var(--border);
+    border-radius:12px;
+  }
+  .line-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 12px;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+  }
+  .line-row:last-child{ border-bottom:none; }
+  .line-row.current{ background:var(--amber-dim); }
+  .line-row.previewing{ background:rgba(95,168,160,0.22); }
+  .line-row.done .line-time{ color:var(--teal); }
+  .line-idx{
+    color:var(--text-dim);
+    font-size:12px;
+    width:22px;
+    flex-shrink:0;
+  }
+  .line-text{
+    flex:1;
+    cursor:pointer;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .line-time{
+    width:66px;
+    flex-shrink:0;
+    text-align:right;
+    color:var(--text-dim);
+    font-size:13px;
+  }
+  .nudge{
+    display:flex;
+    gap:2px;
+  }
+  .nudge button{
+    padding:3px 7px;
+    font-size:12px;
+    font-weight:500;
+  }
+
+  .export-row{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .export-row button{ flex:1; }
+
+  .status{
+    font-size:13px;
+    margin-top:10px;
+    min-height:18px;
+  }
+  .status.error{ color:var(--danger); }
+  .status.ok{ color:var(--teal); }
+
+  .empty-state{
+    color:var(--text-dim);
+    font-size:14px;
+    padding:24px;
+    text-align:center;
+  }
+
+  [hidden]{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div>
+      <h1>Lyric<span>Sync</span></h1>
+      <div class="sub">Tap along to your song, or let a first pass do it for you — then fine‑tune by ear.</div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-mode="manual">Tap along</button>
+      <button class="tab" data-mode="auto">AI first pass</button>
+      <button class="tab" data-mode="import">Check my file</button>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- LEFT: setup -->
+    <div>
+      <div class="panel">
+        <div class="field">
+          <label class="label">Audio file</label>
+          <input type="file" id="audioFile">
+          <div class="hint">Any file type is accepted here — if what you pick isn't actually audio, the player just won't play it.</div>
+          <div class="status" id="fileStatus"></div>
+        </div>
+        <div class="field" id="lyricsField">
+          <label class="label">Lyrics (one line per line)</label>
+          <textarea id="lyricsInput" placeholder="Verse line one
+Verse line two
+Chorus line one
+..."></textarea>
+        </div>
+
+        <div id="autoPanel" hidden>
+          <div class="field">
+            <label class="label">OpenAI API key</label>
+            <input type="password" id="apiKey" placeholder="sk-...">
+            <div class="hint">Used only in your browser, for this one request — it's never saved or sent anywhere else. If the request is blocked by your browser (OpenAI's API isn't always reachable directly from a web page), switch to Tap along instead. Audio files must be under 25MB.</div>
+          </div>
+          <button class="btn-primary" id="transcribeBtn">Transcribe &amp; align</button>
+        </div>
+
+        <div id="importPanel" hidden>
+          <div class="field">
+            <label class="label">Your lyrics file (.lrc or .json)</label>
+            <input type="file" id="syncFile" accept=".lrc,.json,application/json,text/plain">
+            <div class="hint">Already have timestamps? Load them here, then hit "Preview sync" on the right to play the song and watch whether each line lights up at the right moment. Nudge any line that's off with the +/− buttons in the list.</div>
+          </div>
+          <button class="btn-primary" id="importLoadBtn">Load &amp; check sync</button>
+        </div>
+
+        <button class="btn-primary" id="loadBtn" style="margin-top:4px;">Load into workspace</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: workspace -->
+    <div>
+      <div class="stage">
+        <div class="now-line" id="nowLine"><span class="placeholder">Load an audio file and lyrics to begin</span></div>
+        <audio id="player" controls></audio>
+
+        <div class="tap-row" id="tapRow" hidden>
+          <button class="tap-btn" id="tapBtn">Mark line (Enter)</button>
+          <button id="undoBtn">Undo</button>
+          <span class="progress-note" id="progressNote">0 / 0 lines</span>
+        </div>
+
+        <div class="offset-row" id="offsetRow" hidden>
+          <span>Reaction-time offset</span>
+          <input type="range" id="offsetSlider" min="0" max="0.6" step="0.05" value="0.25">
+          <span class="offset-val mono" id="offsetVal">0.25s</span>
+        </div>
+
+        <div class="tap-row" id="previewRow" hidden>
+          <button class="tap-btn" id="previewBtn" style="background:var(--teal);">▶ Preview sync</button>
+          <span class="progress-note">Plays from the start and highlights each line exactly when its timestamp hits.</span>
+        </div>
+
+        <div class="status" id="autoStatus"></div>
+      </div>
+
+      <div class="panel">
+        <div class="lines" id="linesWrap">
+          <div class="empty-state">Your synced lines will appear here.</div>
+        </div>
+        <div class="export-row">
+          <button id="exportLrc" disabled>Download .lrc</button>
+          <button id="exportJson" disabled>Download .json</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  const state = {
+    lines: [],        // {text, time: number|null}
+    current: 0,
+    audioUrl: null,
+    mode: 'manual',
+    previewing: false,
+    previewIndex: -1
+  };
+
+  const el = id => document.getElementById(id);
+  const audioFile = el('audioFile'), lyricsInput = el('lyricsInput'), loadBtn = el('loadBtn');
+  const player = el('player'), nowLine = el('nowLine'), fileStatus = el('fileStatus');
+  const tapRow = el('tapRow'), tapBtn = el('tapBtn'), undoBtn = el('undoBtn'), progressNote = el('progressNote');
+  const offsetRow = el('offsetRow'), offsetSlider = el('offsetSlider'), offsetVal = el('offsetVal');
+  const previewRow = el('previewRow'), previewBtn = el('previewBtn');
+  const linesWrap = el('linesWrap');
+  const exportLrc = el('exportLrc'), exportJson = el('exportJson');
+  const tabs = document.querySelectorAll('.tab');
+  const autoPanel = el('autoPanel'), apiKey = el('apiKey'), transcribeBtn = el('transcribeBtn'), autoStatus = el('autoStatus');
+  const importPanel = el('importPanel'), syncFile = el('syncFile'), importLoadBtn = el('importLoadBtn'), lyricsField = el('lyricsField');
+
+  // ---- mode tabs ----
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    state.mode = t.dataset.mode;
+    autoPanel.hidden = state.mode !== 'auto';
+    importPanel.hidden = state.mode !== 'import';
+    lyricsField.hidden = state.mode === 'import';
+    loadBtn.hidden = state.mode === 'import';
+  }));
+
+  // ---- audio loading ----
+  audioFile.addEventListener('change', () => {
+    const f = audioFile.files[0];
+    if (!f) return;
+    if (state.audioUrl) URL.revokeObjectURL(state.audioUrl);
+    state.audioUrl = URL.createObjectURL(f);
+    player.src = state.audioUrl;
+    fileStatus.className = 'status';
+    fileStatus.textContent = 'Selected: ' + f.name + (f.type ? ' (' + f.type + ')' : ' (type not detected)');
+  });
+
+  player.addEventListener('error', () => {
+    fileStatus.className = 'status error';
+    fileStatus.textContent = 'Your browser can\'t play this file — the format likely isn\'t supported (browsers generally support MP3, WAV, M4A/AAC, and OGG, not things like WMA or AIFF). Try converting the file, or pick a different one.';
+  });
+
+  player.addEventListener('loadedmetadata', () => {
+    if (fileStatus.className.indexOf('error') === -1){
+      fileStatus.className = 'status ok';
+      fileStatus.textContent += ' — loaded, ' + player.duration.toFixed(1) + 's';
+    }
+  });
+
+  function parseLyrics(){
+    return lyricsInput.value
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+  }
+
+  loadBtn.addEventListener('click', () => {
+    const raw = parseLyrics();
+    if (!raw.length) { flash('Paste some lyrics first.', true); return; }
+    if (!player.src) { flash('Choose an audio file first.', true); return; }
+    state.lines = raw.map(text => ({ text, time: null }));
+    state.current = 0;
+    tapRow.hidden = false;
+    offsetRow.hidden = false;
+    previewRow.hidden = false;
+    renderLines();
+    renderNowLine();
+    flash('Workspace loaded. Play the song and tap along.', false);
+  });
+
+  function flash(msg, isError){
+    // reuses autoStatus if in auto tab context, else just a quiet console-level note
+    autoStatus.textContent = msg;
+    autoStatus.className = 'status ' + (isError ? 'error' : 'ok');
+  }
+
+  // ---- tap-along sync ----
+  function markCurrentLine(){
+    if (!state.lines.length || state.current >= state.lines.length) return;
+    const offset = parseFloat(offsetSlider.value) || 0;
+    const t = Math.max(0, player.currentTime - offset);
+    state.lines[state.current].time = t;
+    state.current++;
+    renderLines();
+    renderNowLine();
+    updateProgress();
+  }
+
+  function undoLast(){
+    if (state.current === 0) return;
+    state.current--;
+    state.lines[state.current].time = null;
+    renderLines();
+    renderNowLine();
+    updateProgress();
+  }
+
+  tapBtn.addEventListener('click', markCurrentLine);
+  undoBtn.addEventListener('click', undoLast);
+
+  document.addEventListener('keydown', (e) => {
+    const tag = document.activeElement.tagName;
+    if (tag === 'TEXTAREA' || tag === 'INPUT') return;
+    if (e.code === 'Enter') { e.preventDefault(); markCurrentLine(); }
+    if (e.code === 'Backspace') { e.preventDefault(); undoLast(); }
+    if (e.code === 'Space') { e.preventDefault(); player.paused ? player.play() : player.pause(); }
+  });
+
+  offsetSlider.addEventListener('input', () => {
+    offsetVal.textContent = parseFloat(offsetSlider.value).toFixed(2) + 's';
+  });
+
+  function updateProgress(){
+    const done = state.lines.filter(l => l.time !== null).length;
+    progressNote.textContent = done + ' / ' + state.lines.length + ' lines';
+    const allDone = done === state.lines.length && state.lines.length > 0;
+    exportLrc.disabled = !allDone;
+    exportJson.disabled = !allDone;
+  }
+
+  function renderNowLine(){
+    if (!state.lines.length){
+      nowLine.innerHTML = '<span class="placeholder">Load an audio file and lyrics to begin</span>';
+      return;
+    }
+    if (state.previewing){
+      nowLine.textContent = state.previewIndex >= 0 ? state.lines[state.previewIndex].text : '···';
+      return;
+    }
+    if (state.current >= state.lines.length){
+      nowLine.innerHTML = '<span class="placeholder">All lines marked — review below, then export</span>';
+      return;
+    }
+    nowLine.textContent = state.lines[state.current].text;
+  }
+
+  // ---- preview: play back and highlight lines by their real timestamps ----
+  function findPreviewIndex(t){
+    let idx = -1;
+    for (let i = 0; i < state.lines.length; i++){
+      if (state.lines[i].time !== null && state.lines[i].time <= t) idx = i;
+      else if (state.lines[i].time !== null) break;
+    }
+    return idx;
+  }
+
+  function onPreviewTimeUpdate(){
+    const idx = findPreviewIndex(player.currentTime);
+    if (idx !== state.previewIndex){
+      state.previewIndex = idx;
+      renderNowLine();
+      renderLines();
+    }
+  }
+
+  function stopPreview(){
+    state.previewing = false;
+    state.previewIndex = -1;
+    previewBtn.textContent = '▶ Preview sync';
+    tapBtn.disabled = false;
+    undoBtn.disabled = false;
+    player.removeEventListener('timeupdate', onPreviewTimeUpdate);
+    player.removeEventListener('ended', stopPreview);
+    player.removeEventListener('pause', onPreviewPause);
+    renderNowLine();
+    renderLines();
+  }
+
+  function onPreviewPause(){
+    // only auto-stop if paused because it reached the end or user hit pause manually
+    if (state.previewing) stopPreview();
+  }
+
+  previewBtn.addEventListener('click', () => {
+    if (state.previewing){ player.pause(); stopPreview(); return; }
+    if (!player.src) { flash('Choose an audio file first.', true); return; }
+    if (!state.lines.some(l => l.time !== null)) { flash('Sync at least one line first.', true); return; }
+    state.previewing = true;
+    state.previewIndex = -1;
+    previewBtn.textContent = '⏸ Stop preview';
+    tapBtn.disabled = true;
+    undoBtn.disabled = true;
+    player.currentTime = 0;
+    player.addEventListener('timeupdate', onPreviewTimeUpdate);
+    player.addEventListener('ended', stopPreview);
+    player.addEventListener('pause', onPreviewPause);
+    player.play();
+  });
+
+  // ---- lines list ----
+  function renderLines(){
+    if (!state.lines.length){
+      linesWrap.innerHTML = '<div class="empty-state">Your synced lines will appear here.</div>';
+      return;
+    }
+    linesWrap.innerHTML = '';
+    state.lines.forEach((line, i) => {
+      const row = document.createElement('div');
+      const isPreviewCurrent = state.previewing && i === state.previewIndex;
+      const isTapCurrent = !state.previewing && i === state.current;
+      row.className = 'line-row'
+        + (isTapCurrent ? ' current' : '')
+        + (isPreviewCurrent ? ' previewing' : '')
+        + (line.time !== null ? ' done' : '');
+      if (isPreviewCurrent) requestAnimationFrame(() => row.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+
+      const idx = document.createElement('span');
+      idx.className = 'line-idx mono';
+      idx.textContent = i + 1;
+
+      const text = document.createElement('span');
+      text.className = 'line-text';
+      text.textContent = line.text;
+      text.title = 'Click to seek here';
+      text.addEventListener('click', () => {
+        if (line.time !== null) player.currentTime = line.time;
+        state.current = i;
+        renderLines();
+        renderNowLine();
+      });
+
+      const time = document.createElement('span');
+      time.className = 'line-time mono';
+      time.textContent = line.time !== null ? line.time.toFixed(2) + 's' : '—';
+
+      const nudge = document.createElement('span');
+      nudge.className = 'nudge';
+      const minus = document.createElement('button');
+      minus.textContent = '−';
+      minus.addEventListener('click', () => nudgeLine(i, -0.1));
+      const plus = document.createElement('button');
+      plus.textContent = '+';
+      plus.addEventListener('click', () => nudgeLine(i, 0.1));
+      nudge.append(minus, plus);
+
+      row.append(idx, text, time, nudge);
+      linesWrap.appendChild(row);
+    });
+    updateProgress();
+  }
+
+  function nudgeLine(i, delta){
+    if (state.lines[i].time === null) return;
+    state.lines[i].time = Math.max(0, state.lines[i].time + delta);
+    renderLines();
+  }
+
+  // ---- export ----
+  function formatLrcTime(t){
+    const m = Math.floor(t / 60);
+    const s = t - m * 60;
+    return String(m).padStart(2,'0') + ':' + s.toFixed(2).padStart(5,'0');
+  }
+
+  function download(filename, content, type){
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  exportLrc.addEventListener('click', () => {
+    const lrc = state.lines.map(l => `[${formatLrcTime(l.time)}]${l.text}`).join('\n');
+    download('lyrics.lrc', lrc, 'text/plain');
+  });
+
+  exportJson.addEventListener('click', () => {
+    const json = JSON.stringify(
+      state.lines.map(l => ({ time: Number(l.time.toFixed(2)), text: l.text })),
+      null, 2
+    );
+    download('lyrics.json', json, 'application/json');
+  });
+
+  // ---- check an existing .lrc or .json file against the audio ----
+  function parseLrcFile(text){
+    const timeTag = /\[(\d{1,2}):(\d{2}(?:[.:]\d{1,3})?)\]/g;
+    const result = [];
+    text.split(/\r?\n/).forEach(raw => {
+      const tags = [...raw.matchAll(timeTag)];
+      if (!tags.length) return; // metadata tag ([ar:], [ti:]...) or blank line
+      const lineText = raw.replace(timeTag, '').trim();
+      if (!lineText) return; // instrumental marker with no lyric text
+      tags.forEach(tag => {
+        const min = parseInt(tag[1], 10);
+        const sec = parseFloat(tag[2].replace(':', '.'));
+        result.push({ time: min * 60 + sec, text: lineText });
+      });
+    });
+    result.sort((a, b) => a.time - b.time);
+    return result;
+  }
+
+  function parseJsonSyncFile(text){
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error('expected a JSON array of {time, text} objects');
+    const timeKeys = ['time', 'start', 't', 'seconds'];
+    const textKeys = ['text', 'line', 'lyric', 'words'];
+    const result = data.map(item => {
+      if (!item || typeof item !== 'object') throw new Error('every item must be an object with a time and text field');
+      let time = null, txt = null;
+      for (const k of timeKeys){ if (typeof item[k] === 'number'){ time = item[k]; break; } }
+      for (const k of textKeys){ if (typeof item[k] === 'string'){ txt = item[k]; break; } }
+      if (time === null || txt === null) throw new Error('could not find both a numeric time and text field on one entry');
+      return { time, text: txt };
+    });
+    result.sort((a, b) => a.time - b.time);
+    return result;
+  }
+
+  function parseSyncFile(filename, text){
+    const lower = filename.toLowerCase();
+    if (lower.endsWith('.lrc')) return parseLrcFile(text);
+    if (lower.endsWith('.json')) return parseJsonSyncFile(text);
+    try { return parseJsonSyncFile(text); }
+    catch (e) { return parseLrcFile(text); }
+  }
+
+  importLoadBtn.addEventListener('click', () => {
+    const f = syncFile.files[0];
+    if (!f) { flash('Choose a .lrc or .json file first.', true); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      let lines;
+      try {
+        lines = parseSyncFile(f.name, reader.result);
+      } catch (err) {
+        flash('Could not read that file — ' + err.message + '.', true);
+        return;
+      }
+      if (!lines.length) { flash('No timed lines found in that file.', true); return; }
+      state.lines = lines;
+      state.current = state.lines.length;
+      tapRow.hidden = false;
+      offsetRow.hidden = false;
+      previewRow.hidden = false;
+      renderLines();
+      renderNowLine();
+      flash('Loaded ' + lines.length + ' lines from ' + f.name + ' — load your audio (if you haven\'t) and press "Preview sync" to check it.', false);
+    };
+    reader.onerror = () => flash('Could not read that file.', true);
+    reader.readAsText(f);
+  });
+
+  // ---- AI first pass (OpenAI Whisper word timestamps) ----
+  transcribeBtn.addEventListener('click', async () => {
+    const key = apiKey.value.trim();
+    const raw = parseLyrics();
+    if (!audioFile.files[0]) { flash('Choose an audio file first.', true); return; }
+    if (!raw.length) { flash('Paste your lyrics first — they\'re used as the reference text.', true); return; }
+    if (!key) { flash('Paste an OpenAI API key to use this mode.', true); return; }
+
+    transcribeBtn.disabled = true;
+    flash('Uploading and transcribing… this can take a minute.', false);
+
+    try {
+      const form = new FormData();
+      form.append('file', audioFile.files[0]);
+      form.append('model', 'whisper-1');
+      form.append('response_format', 'verbose_json');
+      form.append('timestamp_granularities[]', 'word');
+
+      const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + key },
+        body: form
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error('API error ' + res.status + ': ' + errText.slice(0, 200));
+      }
+
+      const data = await res.json();
+      const words = data.words || [];
+      if (!words.length) throw new Error('No word-level timestamps came back.');
+
+      const aligned = alignLyricsToWords(raw, words);
+      state.lines = aligned;
+      state.current = state.lines.length; // treat as fully marked, ready to review
+      tapRow.hidden = false;
+      offsetRow.hidden = false;
+      previewRow.hidden = false;
+      renderLines();
+      renderNowLine();
+      flash('First pass done — check the timestamps below and nudge any that are off.', false);
+    } catch (err) {
+      flash(err.message + ' — try the "Tap along" tab instead.', true);
+    } finally {
+      transcribeBtn.disabled = false;
+    }
+  });
+
+  function normWord(w){
+    return w.toLowerCase().replace(/[^a-z0-9']/g, '');
+  }
+
+  // Greedy sequential alignment: walk the transcript word list once,
+  // and for each lyric line, take the timestamp of its first word-match
+  // found after the current pointer. Unmatched first words fall back to
+  // interpolation between neighboring matched lines.
+  function alignLyricsToWords(lyricLines, words){
+    const normWords = words.map(w => normWord(w.word || w.text || ''));
+    let ptr = 0;
+    const result = lyricLines.map(text => ({ text, time: null }));
+
+    lyricLines.forEach((line, i) => {
+      const lineWords = line.split(/\s+/).map(normWord).filter(Boolean);
+      if (!lineWords.length) return;
+      const target = lineWords[0];
+      const searchLimit = Math.min(normWords.length, ptr + 400);
+      for (let j = ptr; j < searchLimit; j++){
+        if (normWords[j] === target){
+          result[i].time = words[j].start;
+          ptr = j + 1;
+          return;
+        }
+      }
+      // fuzzy fallback: try any word in the line, not just the first
+      for (let k = 1; k < lineWords.length; k++){
+        for (let j = ptr; j < searchLimit; j++){
+          if (normWords[j] === lineWords[k]){
+            result[i].time = words[j].start;
+            ptr = j + 1;
+            return;
+          }
+        }
+      }
+    });
+
+    // interpolate any lines that found no match
+    for (let i = 0; i < result.length; i++){
+      if (result[i].time === null){
+        let prev = i > 0 ? result[i-1].time : 0;
+        let next = null, steps = 1;
+        for (let j = i+1; j < result.length; j++, steps++){
+          if (result[j].time !== null){ next = result[j].time; break; }
+        }
+        if (prev === null) prev = 0;
+        if (next === null) next = prev + steps * 2;
+        result[i].time = prev + (next - prev) / (steps + 1);
+      }
+    }
+    return result;
+  }
+
+})();
+</script>
+</body>
+</html>
